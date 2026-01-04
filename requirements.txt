@@ -1,0 +1,7 @@
+faiss-cpu
+sentence-transformers
+numpy
+pandas
+matplotlib
+seaborn>=0.12
+tqdm
