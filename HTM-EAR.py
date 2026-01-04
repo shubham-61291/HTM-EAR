@@ -1,7 +1,7 @@
 
 """
 HTM-EAR: A Policy-Driven, Importance-Preserving Memory Substrate for Long-Running Agents
-Experimental Framework  - FINAL PRODUCTION RELEASE
+Experimental Framework  - research-grade reference implementation
 """
 
 import subprocess
