@@ -193,12 +193,12 @@ Save the three figures as PNG files
 All outputs are printed to the console; figures are saved in the current directory.
 
 ## 🧩 Repository Structure
-text
+
 ```
 HTM-EAR/
 │
 ├── htm_ear.py                 # Core architecture + benchmark suite
-├── albratrionScenarioB.png    # Saturation precision analysis figure
+├── ablationScenarioB.png    # Saturation precision analysis figure
 ├── pareto frontier.png        # Latency–precision tradeoff figure
 ├── performance BGL.png        # Real‑world validation figure
 └── README.md
