@@ -1,115 +1,248 @@
-# HTM-EAR  
-**Hierarchical Tiered Memory with Essential-Aware Retention**
+markdown
+# HTM‑EAR: Hierarchical Tiered Memory with Essential‑Aware Retention
+
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+A policy‑driven memory substrate designed to enhance LLM reliability under bounded context constraints.
 
 ---
 
-## Project Overview
+## 📌 Overview
 
-This repository contains the implementation of **HTM-EAR**, a memory management system designed to study how information is stored, forgotten, and preserved under **explicit memory capacity constraints**. The system focuses on **controlled forgetting under memory saturation** and explicitly tracks whether **essential information is ever lost**.
+Large Language Models operate under fixed context windows. As long‑running agents accumulate interaction history, naive memory mechanisms suffer from:
 
-HTM-EAR is evaluated as an **infrastructure-level memory substrate**.  
-It does **not** target downstream task accuracy or benchmark performance.
+- **Context collapse** – losing earlier context as the window fills.
+- **Memory saturation** – indiscriminate eviction of facts.
+- **Loss of critical historical facts** – important information is forgotten.
+- **Precision degradation** – retrieval quality declines under pressure.
+- **Latency–accuracy tradeoffs** – naive systems force a choice between speed and recall.
 
----
+**HTM‑EAR** addresses these challenges through a **hierarchical, policy‑aware memory architecture** that preserves essential information while maintaining retrieval precision and practical latency.
 
-## Project
+This repository contains:
 
-### HTM-EAR System (`HTM-EAR.py`)
-
-A complete experimental framework that simulates **hierarchical memory** with **policy-driven retention and eviction**, enabling systematic analysis of memory behavior under saturation.
-
----
-
-## Key Features
-
-- Hierarchical memory structure with **working memory (L1)** and **history memory (L2)**
-- Capacity-based overflow handling and pruning
-- Policy-controlled forgetting mechanism
-- Explicit tracking of **essential vs non-essential** information
-- Semantic routing gate for memory access decisions
-- Multi-seed experimental evaluation for robustness
+- A bottom‑up implementation of the HTM‑EAR architecture (`htm_ear.py`)
+- Multi‑scenario benchmark suite
+- Ablation analysis
+- Real‑world log validation (BGL dataset)
+- Performance and latency visualization
 
 ---
 
-## Experiments
+## 🧠 Architecture
 
-The system evaluates three controlled scenarios:
+HTM‑EAR implements a **two‑tier memory hierarchy**:
 
-### 1. Overflow Scenario  
-Memory exceeds **working memory (L1)** capacity.
+| Tier | Role            | Capacity      | Function |
+|------|-----------------|---------------|----------|
+| L1   | Working Memory  | Bounded       | Holds high‑priority recent facts |
+| L2   | Archival Memory | Larger bounded | Stores evicted but retained historical facts |
 
-### 2. Forgetting Scenario  
-Memory exceeds **total memory (L1 + L2)** capacity, triggering controlled forgetting.
+### Core Design Principles
 
-### 3. Control Scenario  
-Memory remains within capacity limits.
+- **Importance‑aware eviction** – facts are scored by importance (e.g., 0.95 for critical errors, 0.5 for routine logs)
+- **Usage‑aware retention** – frequently accessed facts are protected
+- **Hybrid neural‑symbolic retrieval** – combines dense embeddings with entity‑based matching
+- **Entity‑aware routing** – queries are directed to the correct tier based on entity overlap and similarity
+- **Cross‑encoder precision reranking** – optional second‑stage ranking for maximum accuracy
+- **Saturation robustness** – explicitly tested under memory pressure
 
-Each scenario is evaluated across **multiple random seeds** to ensure stability and reproducibility.
+### Eviction Score
+score = 0.75 * importance + 0.25 * min(usage / 10, 1.0)
+
+text
+
+When a tier reaches capacity, the lowest‑scoring 15% of items are evicted.
+
+### Retrieval Scoring
+
+Retrieved candidates are scored using:
+score = sim³ + 0.8 * entity_overlap + 0.1 * importance
+
+text
+
+This creates a memory system that **actively manages its lifecycle** rather than passively storing vectors.
 
 ---
 
-## Metrics
+## 🔍 Retrieval Pipeline
 
-The following metrics are reported:
+HTM‑EAR’s multi‑stage retrieval stack:
 
-- **Active memory retrieval performance** (recent information)
-- **Historical memory retrieval performance** (older information)
-- **Essential memory loss** (count of essential items permanently lost)
-- **Pruned entries** (total number of evicted items)
-- **Latency statistics** (active retrieval path only)
+1. **Bi‑encoder semantic recall** – fast candidate retrieval from the appropriate tier.
+2. **Entity‑aware routing** – if the top L1 candidate has low similarity or missing entities, fall back to L2.
+3. **Hybrid scoring** – combine similarity, entity overlap, and importance.
+4. **Optional cross‑encoder reranking** – re‑score top candidates for maximum precision.
 
-> *Retention is evaluated implicitly through essential memory survival and historical retrieval behavior.*
-
-Final aggregated results and tables are provided in **`HTM-EAR-OUTPUT.docx`**.
+This architecture balances precision and latency, giving users a knob to trade speed for accuracy.
 
 ---
 
-## Usage
+## 🧪 Experimental Evaluation
 
-All experiments can be reproduced by running:
+### Scenarios
+
+| Scenario              | Purpose |
+|-----------------------|---------|
+| Scenario A: Overflow   | Memory pressure under moderate scale (3,000 facts) |
+| Scenario B: Saturation | Long‑term forgetting stress test (15,000 facts) |
+| Scenario C: High‑Capacity | Control baseline (5,000 facts) |
+
+### Ablation Modes
+
+| Mode               | Description |
+|--------------------|-------------|
+| `full`             | Complete HTM‑EAR architecture |
+| `oracle_unbounded` | No capacity limit (theoretical upper bound) |
+| `no_ce`            | Cross‑encoder disabled |
+| `no_gate`          | Tier routing disabled (always stays in L1) |
+| `lru`              | Standard Least‑Recently‑Used eviction |
+
+---
+
+## 📊 Saturation Stress Test (Scenario B)
+
+### Precision Decay Analysis
+
+![Ablation Study](albratrionScenarioB.png)  
+*Mean Reciprocal Rank (MRR) for active (blue) and history (orange) queries. Error bars show ±1σ over 5 seeds.*
+
+| Mode              | Active MRR | History MRR | Essential Lost | Pruned Total | Latency (ms) |
+|-------------------|------------|-------------|----------------|--------------|--------------|
+| **full**          | **1.000**  | 0.215       | **0**          | 9750         | 39.7         |
+| lru               | 1.000      | 0.000       | **2416**       | 9750         | 21.1         |
+| no_ce             | 1.000      | 0.218       | 0              | 9750         | 20.9         |
+| no_gate           | 0.432      | 0.000       | 0              | 9750         | 41.1         |
+| oracle_unbounded  | 0.997      | 0.990       | 0              | 0            | 37.4         |
+
+**Key Observations:**
+
+- `full` maintains high active precision and **preserves all essential facts**.
+- `lru`, despite identical pruning volume, **destroys >2400 important facts** – proving recency alone is insufficient.
+- `no_gate` collapses under saturation, confirming the importance of tier routing.
+- Policy‑based retention prevents catastrophic forgetting.
+
+---
+
+## ⚖️ Latency–Precision Tradeoff
+
+![Pareto Frontier](pareto%20frontier.png)  
+*Active‑phase MRR against retrieval latency. The shaded red region indicates the “failure zone” (MRR < 0.6).*
+
+The Pareto analysis demonstrates:
+
+- The cross‑encoder increases precision but adds latency.
+- `no_ce` provides faster retrieval with minor precision impact.
+- LRU achieves speed but at severe retention cost.
+
+This highlights the **controllable system tradeoffs** – users can tune for their latency or accuracy requirements.
+
+---
+
+## 🌍 Real‑World Validation (BGL Logs)
+
+Evaluation on the Blue Gene/L system logs (2,000‑line sample):
+
+![BGL Performance](performance%20BGL.png)
+
+| Mode              | MRR    | Latency (ms) |
+|-------------------|--------|--------------|
+| oracle_unbounded  | 0.370  | 42.0         |
+| full              | 0.336  | 42.7         |
+| lru               | 0.069  | 22.5         |
+
+**This confirms:**
+
+- HTM‑EAR generalizes beyond synthetic data.
+- Importance‑aware retention prevents real‑world degradation (5× better than LRU).
+- Performance approaches the unbounded oracle.
+
+---
+
+## 📈 System Robustness Metrics
+
+From Scenario B evaluation (active phase):
+
+| Mode              | Latency (ms) | Essential Lost | Pruned Total |
+|-------------------|--------------|----------------|--------------|
+| full              | ~39          | 0              | ~9750        |
+| no_ce             | ~21          | 0              | ~9750        |
+| lru               | ~21          | ~2400          | ~9750        |
+| no_gate           | ~41          | 0              | ~9750        |
+| oracle_unbounded  | ~37          | 0              | 0            |
+
+**Key Insight:** Essential fact preservation is the defining differentiator of HTM‑EAR over naive eviction strategies.
+
+---
+
+## 🚀 Running the Benchmark
+
+Simply execute:
 
 ```bash
-pip install -r requirements.txt
-python HTM-EAR.py
-Technical Details
-Framework: Python
+python htm_ear.py
+```
 
-Retrieval: Dense vector embeddings with FAISS (inner product search)
+The script will:
 
-Execution: CPU-based by default
+Automatically install missing dependencies (hnswlib, sentence‑transformers, etc.)
 
-GPU: If available, affects runtime only (not experimental outcomes)
+Generate synthetic datasets for three scenarios (5 seeds each)
 
-Files
-HTM-EAR.py — Core implementation and experimental framework
+Download a real BGL log sample
 
-HTM-EAR-OUTPUT.docx — Final experimental results and tables
+Print result tables (MRR, latency, essential loss)
 
-requirements.txt — Python dependencies
+Save the three figures as PNG files
 
-Author
-Shubham Kumar Singh
+All outputs are printed to the console; figures are saved in the current directory.
 
-License
-MIT License
+🧩 Repository Structure
+text
+HTM-EAR/
+│
+├── htm_ear.py                 # Core architecture + benchmark suite
+├── albratrionScenarioB.png    # Saturation precision analysis figure
+├── pareto frontier.png        # Latency–precision tradeoff figure
+├── performance BGL.png        # Real‑world validation figure
+└── README.md
+🎯 Design Objective
 
-Copyright (c) 2026 Shubham Kumar Singh
+HTM‑EAR is not a replacement for LLMs. It is a memory substrate designed to enhance:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Long‑running agent stability
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Context‑constrained reasoning
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Historical recall reliability
 
+Retrieval precision under capacity limits
+
+The architecture is intentionally modular and suitable for integration with:
+
+RAG systems
+
+Tool‑using agents
+
+Log reasoning pipelines
+
+Multi‑session assistants
+
+📌 Contribution Summary
+Policy‑driven hierarchical memory architecture
+
+Importance‑aware eviction mechanism
+
+Hybrid symbolic–neural retrieval scoring
+
+Multi‑scenario ablation validation
+
+Real‑world log benchmark evaluation
+
+Latency–precision Pareto analysis
+
+🏗️ Author
+Designed and implemented bottom‑up by Shubham Singh.
+
+📄 License
+This project is licensed under the Apache License, Version 2.0. See the LICENSE file for details.
