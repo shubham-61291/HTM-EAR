@@ -199,6 +199,7 @@ All outputs are printed to the console; figures are saved in the current directo
 
 🧩 Repository Structure
 text
+```
 HTM-EAR/
 │
 ├── htm_ear.py                 # Core architecture + benchmark suite
@@ -206,6 +207,7 @@ HTM-EAR/
 ├── pareto frontier.png        # Latency–precision tradeoff figure
 ├── performance BGL.png        # Real‑world validation figure
 └── README.md
+```
 🎯 Design Objective
 
 HTM‑EAR is not a replacement for LLMs. It is a memory substrate designed to enhance:
