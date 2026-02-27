@@ -49,16 +49,12 @@ HTM‑EAR implements a **two‑tier memory hierarchy**:
 ### Eviction Score
 score = 0.75 * importance + 0.25 * min(usage / 10, 1.0)
 
-text
-
 When a tier reaches capacity, the lowest‑scoring 15% of items are evicted.
 
 ### Retrieval Scoring
 
 Retrieved candidates are scored using:
 score = sim³ + 0.8 * entity_overlap + 0.1 * importance
-
-text
 
 This creates a memory system that **actively manages its lifecycle** rather than passively storing vectors.
 
