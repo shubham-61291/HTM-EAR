@@ -104,7 +104,7 @@ This architecture balances precision and latency, giving users a knob to trade s
 
 ### Precision Decay Analysis
 
-![Ablation Study](albratrionScenarioB.png)  
+![Ablation Study](albrationScenarioB.png)  
 *Mean Reciprocal Rank (MRR) for active (blue) and history (orange) queries. Error bars show ±1σ over 5 seeds.*
 
 | Mode              | Active MRR | History MRR | Essential Lost | Pruned Total | Latency (ms) |
