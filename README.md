@@ -243,7 +243,9 @@ Real‑world log benchmark evaluation
 Latency–precision Pareto analysis
 
 🏗️ Author
+
 Designed and implemented bottom‑up by Shubham Singh.
 
 📄 License
+
 This project is licensed under the Apache License, Version 2.0. See the LICENSE file for details.
