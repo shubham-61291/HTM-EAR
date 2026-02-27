@@ -196,7 +196,7 @@ Save the three figures as PNG files
 
 All outputs are printed to the console; figures are saved in the current directory.
 
-🧩 Repository Structure
+## 🧩 Repository Structure
 text
 ```
 HTM-EAR/
@@ -207,7 +207,7 @@ HTM-EAR/
 ├── performance BGL.png        # Real‑world validation figure
 └── README.md
 ```
-🎯 Design Objective
+## 🎯 Design Objective
 
 HTM‑EAR is not a replacement for LLMs. It is a memory substrate designed to enhance:
 
@@ -229,7 +229,7 @@ Log reasoning pipelines
 
 Multi‑session assistants
 
-📌 Contribution Summary
+## 📌 Contribution Summary
 Policy‑driven hierarchical memory architecture
 
 Importance‑aware eviction mechanism
@@ -242,10 +242,10 @@ Real‑world log benchmark evaluation
 
 Latency–precision Pareto analysis
 
-🏗️ Author
+## 🏗️ Author
 
 Designed and implemented bottom‑up by Shubham Singh.
 
-📄 License
+## 📄 License
 
 This project is licensed under the Apache License, Version 2.0. See the LICENSE file for details.
