@@ -2,7 +2,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-A policy‑driven memory substrate designed to enhance LLM reliability under bounded context constraints.
+A hierarchical memory substrate for bounded-context LLM agents with importance-aware retention and saturation-robust evaluation.
 
 ---
 
